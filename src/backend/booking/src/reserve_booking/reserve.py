@@ -7,8 +7,6 @@ from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from botocore.exceptions import ClientError
 
-from process_booking import process_booking_handler
-
 logger = Logger()
 tracer = Tracer()
 metrics = Metrics()
@@ -18,7 +16,6 @@ dynamodb = session.resource("dynamodb")
 table_name = os.getenv("BOOKING_TABLE_NAME", "undefined")
 table = dynamodb.Table(table_name)
 
-
 class BookingReservationException(Exception):
     def __init__(self, message=None, details=None):
         self.message = message or "Booking reservation failed"
@@ -27,7 +24,6 @@ class BookingReservationException(Exception):
 
 def is_booking_request_valid(booking):
     return all(x in booking for x in ["outboundFlightId", "customerId", "chargeId"])
-
 
 @tracer.capture_method
 def reserve_booking(booking):
@@ -88,9 +84,6 @@ def reserve_booking(booking):
         logger.exception({"operation": "reserve_booking"})
         raise BookingReservationException(details=err)
 
-
-@metrics.log_metrics(capture_cold_start_metric=True)
-@process_booking_handler(logger=logger)
 def lambda_handler(event, context):
     """AWS Lambda Function entrypoint to reserve a booking
 
