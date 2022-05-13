@@ -5,8 +5,6 @@ from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from botocore.exceptions import ClientError
 
-from process_booking import process_booking_handler
-
 logger = Logger()
 tracer = Tracer()
 metrics = Metrics()
@@ -15,13 +13,12 @@ session = boto3.Session()
 dynamodb = session.resource("dynamodb")
 table_name = os.getenv("BOOKING_TABLE_NAME", "undefined")
 table = dynamodb.Table(table_name)
-
+print(table_name)
 
 class BookingCancellationException(Exception):
     def __init__(self, message=None, details=None):
         self.message = message or "Booking cancellation failed"
         self.details = details or {}
-
 
 @tracer.capture_method
 def cancel_booking(booking_id):
@@ -44,9 +41,6 @@ def cancel_booking(booking_id):
         logger.exception({"operation": "booking_cancellation"})
         raise BookingCancellationException(details=err)
 
-
-@metrics.log_metrics(capture_cold_start_metric=True)
-@process_booking_handler(logger=logger)
 def lambda_handler(event, context):
     """AWS Lambda Function entrypoint to cancel booking
 
@@ -71,7 +65,9 @@ def lambda_handler(event, context):
     BookingCancellationException
         Booking Cancellation Exception including error message upon failure
     """
+
     booking_id = event.get("bookingId")
+    print(booking_id)
 
     if not booking_id:
         metrics.add_metric(name="InvalidCancellationRequest", unit=MetricUnit.Count, value=1)
